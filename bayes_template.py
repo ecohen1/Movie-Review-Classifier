@@ -5,7 +5,7 @@
 #
 #
 
-import math, os, pickle, re
+import math, os, pickle, re, random, sys
 
 class Bayes_Classifier:
 
@@ -27,41 +27,76 @@ class Bayes_Classifier:
    def train(self):
       """Trains the Naive Bayes Sentiment Classifier."""
 
-      self.goodReviewFrequency["num_good_documents"] = 0
-      self.badReviewFrequency["num_bad_documents"] = 0
 
       lFileList = []
       for fFileObj in os.walk("reviews/movies_reviews"):
           lFileList = fFileObj[2]
           break
       print 'training on ' + str(len(lFileList)) + ' files'
+      folds = 10
+      for i in range(folds):
 
-      for review in lFileList:
-          reviewInfo = review.split('-')
-          if len(reviewInfo) == 3:
-              if reviewInfo[1] == '1':
-                  self.badReviewFrequency["num_bad_documents"] += 1
-                  reviewText = self.loadFile("reviews/movies_reviews/"+review)
-                  tokens = self.tokenize(reviewText)
-                  for word in tokens:
-                      if word in self.badReviewFrequency.keys():
-                          self.badReviewFrequency[word] += 1
-                      else:
-                          self.badReviewFrequency[word] = 1
-              elif reviewInfo[1] == '5':
-                  self.goodReviewFrequency["num_good_documents"] += 1
-                  reviewText = self.loadFile("reviews/movies_reviews/"+review)
-                  tokens = self.tokenize(reviewText)
-                  for word in tokens:
-                      if word in self.goodReviewFrequency.keys():
-                          self.goodReviewFrequency[word] += 1
-                      else:
-                          self.goodReviewFrequency[word] = 1
+          self.goodReviewFrequency = {}
+          self.badReviewFrequency = {}
+          self.goodReviewFrequency["num_good_documents"] = 0
+          self.badReviewFrequency["num_bad_documents"] = 0
+        #   print lFileList[0:10]
+          random.shuffle(lFileList)
+          shuffledFileList = lFileList
+        #   print shuffledFileList[0:10]
+          endIndex = int(.9*len(shuffledFileList))
+          trainFileList = shuffledFileList[0:endIndex]
 
-          self.save(self.goodReviewFrequency, "goodReviews.txt")
-          self.save(self.badReviewFrequency, "badReviews.txt")
-          print 'done training'
+          numRead = 0
+          for review in trainFileList:
+              reviewInfo = review.split('-')
+              if len(reviewInfo) == 3:
+                  numRead += 1
+                  if reviewInfo[1] == '1':
+                    #   print numRead
+                      self.badReviewFrequency["num_bad_documents"] += 1
+                      reviewText = self.loadFile("reviews/movies_reviews/"+review)
+                      tokens = self.tokenize(reviewText)
+                      for word in tokens:
+                          if word in self.badReviewFrequency.keys():
+                              self.badReviewFrequency[word] += 1
+                          else:
+                              self.badReviewFrequency[word] = 1
+                  elif reviewInfo[1] == '5':
+                    #   print numRead
+                      self.goodReviewFrequency["num_good_documents"] += 1
+                      reviewText = self.loadFile("reviews/movies_reviews/"+review)
+                      tokens = self.tokenize(reviewText)
+                      for word in tokens:
+                          if word in self.goodReviewFrequency.keys():
+                              self.goodReviewFrequency[word] += 1
+                          else:
+                              self.goodReviewFrequency[word] = 1
 
+          self.save(self.goodReviewFrequency, "goodReviews"+str(i)+".txt")
+          self.save(self.badReviewFrequency, "badReviews"+str(i)+".txt")
+        #   print 'done training'
+          self.CVtest(shuffledFileList, endIndex)
+
+   def CVtest(self, fileArray, endIndex):
+       testFileList = fileArray[endIndex:len(fileArray)]
+       numFiles = 0
+       numCorrectlyClassified = 0
+    #    print testFileList
+       for review in testFileList:
+           tokenName = review.split("-")
+           if len(tokenName) == 3:
+               trueClass = tokenName[1]
+               if trueClass == '1' or trueClass == '5':
+                   numFiles += 1
+                #    print 'classifying'
+                   textToClassify = self.loadFile("reviews/movies_reviews/"+review)
+                #    print trueClass, self.classify(textToClassify)
+                   if trueClass == self.classify(textToClassify):
+                       numCorrectlyClassified += 1
+
+       percentageCorrect = float(numCorrectlyClassified/numFiles)
+       print percentageCorrect
 
 
    def classify(self, sText):
@@ -88,18 +123,21 @@ class Bayes_Classifier:
               wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
           else:
-              wordProbabilityPositive = 1/(numGoodWords + (numGoodDocuments + numBadDocuments))
+              wordProbabilityPositive = max(sys.float_info.min, 1/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
           if word in self.badReviewFrequency.keys():
               wordProbabilityNegative = max(sys.float_info.min, (self.badReviewFrequency[word] + 1)/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
           else:
-              wordProbabilityNegative = 1/(numBadWords + (numGoodDocuments + numBadDocuments))
+              wordProbabilityNegative = max(sys.float_info.min, 1/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
-      probabilityPositive += math.log(probabilityGoodDocument)
-      probabilityNegative += math.log(probabilityBadDocument)
+      probabilityPositive += math.log(max(sys.float_info.min, probabilityGoodDocument))
+      probabilityNegative += math.log(max(sys.float_info.min, probabilityBadDocument))
 
-      return max(probabilityPositive, probabilityNegative)
+      if probabilityPositive > probabilityNegative:
+          return 5
+      else:
+          return 0
 
 
    def loadFile(self, sFilename):
