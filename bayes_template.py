@@ -32,7 +32,9 @@ class Bayes_Classifier:
       for fFileObj in os.walk("reviews/movies_reviews"):
           lFileList = fFileObj[2]
           break
-      print 'training on ' + str(len(lFileList)) + ' files'
+      random.shuffle(lFileList)
+      shuffledFileList = lFileList[0:len(lFileList)]
+      print 'training on ' + str(len(shuffledFileList)) + ' files'
       folds = 10
       for i in range(folds):
 
@@ -41,11 +43,12 @@ class Bayes_Classifier:
           self.goodReviewFrequency["num_good_documents"] = 0
           self.badReviewFrequency["num_bad_documents"] = 0
         #   print lFileList[0:10]
-          random.shuffle(lFileList)
-          shuffledFileList = lFileList
         #   print shuffledFileList[0:10]
-          endIndex = int(.9*len(shuffledFileList))
-          trainFileList = shuffledFileList[0:endIndex]
+          startIndex = int(len(shuffledFileList)*i/10)
+          endIndex = int(len(shuffledFileList)*(i+1)/10)
+          trainFileList = shuffledFileList[0:startIndex]
+          trainFileList.extend(shuffledFileList[endIndex:len(shuffledFileList)])
+          testFileList = shuffledFileList[startIndex:endIndex]
 
           numRead = 0
           for review in trainFileList:
@@ -75,13 +78,18 @@ class Bayes_Classifier:
 
           self.save(self.goodReviewFrequency, "goodReviews"+str(i)+".txt")
           self.save(self.badReviewFrequency, "badReviews"+str(i)+".txt")
-        #   print 'done training'
-          self.CVtest(shuffledFileList, endIndex)
+          precision, recall, f_measure = self.crossValidation(testFileList)
+          f = open('results.txt', 'a')
+          f.write(str(i) + " trial resulted in " + str(precision) + ", " + str(recall) + ", " + str(f_measure) + " precision, recall, and f_measure\n")
+          f.close()
 
-   def CVtest(self, fileArray, endIndex):
-       testFileList = fileArray[endIndex:len(fileArray)]
+   def crossValidation(self, testFileList):
        numFiles = 0
-       numCorrectlyClassified = 0
+       truePositives = 0
+       trueNegatives = 0
+       falsePositives = 0
+       falseNegatives = 0
+
     #    print testFileList
        for review in testFileList:
            tokenName = review.split("-")
@@ -91,12 +99,37 @@ class Bayes_Classifier:
                    numFiles += 1
                 #    print 'classifying'
                    textToClassify = self.loadFile("reviews/movies_reviews/"+review)
-                #    print trueClass, self.classify(textToClassify)
-                   if trueClass == self.classify(textToClassify):
-                       numCorrectlyClassified += 1
+                   classification = self.classify(textToClassify)
+                   print trueClass, classification
+                   if trueClass == classification:
+                       if trueClass == '1':
+                           trueNegatives += 1
+                           print 'trueNegative'
+                       else:
+                           truePositives += 1
+                           print 'truePositive'
+                   else:
+                       if trueClass == '1':
+                           falsePositives += 1
+                           print 'falsePositive'
+                       else:
+                           falseNegatives += 1
+                           print 'falseNegative'
 
-       percentageCorrect = float(numCorrectlyClassified/numFiles)
-       print percentageCorrect
+    #    percentageCorrect = float(numCorrectlyClassified)/numFiles
+       if truePositives + falsePositives != 0:
+           precision = float(truePositives)/(truePositives + falsePositives)
+       else:
+           precision = 0.0
+       if truePositives + falseNegatives:
+           recall = float(truePositives)/(truePositives + falseNegatives)
+       else:
+           recall = 0.0
+       if precision != 0 or recall != 0:
+           f_measure = 2*precision*recall/(precision + recall)
+       else:
+           f_measure = 0.0
+       return (precision, recall, f_measure)
 
 
    def classify(self, sText):
@@ -120,24 +153,24 @@ class Bayes_Classifier:
       tokens = self.tokenize(sText)
       for word in tokens:
           if word in self.goodReviewFrequency.keys():
-              wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
+              wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1.0)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
           else:
-              wordProbabilityPositive = max(sys.float_info.min, 1/(numGoodWords + (numGoodDocuments + numBadDocuments)))
+              wordProbabilityPositive = max(sys.float_info.min, 1.0/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
           if word in self.badReviewFrequency.keys():
-              wordProbabilityNegative = max(sys.float_info.min, (self.badReviewFrequency[word] + 1)/(numBadWords + (numGoodDocuments + numBadDocuments)))
+              wordProbabilityNegative = max(sys.float_info.min, (self.badReviewFrequency[word] + 1.0)/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
           else:
-              wordProbabilityNegative = max(sys.float_info.min, 1/(numBadWords + (numGoodDocuments + numBadDocuments)))
+              wordProbabilityNegative = max(sys.float_info.min, 1.0/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
       probabilityPositive += math.log(max(sys.float_info.min, probabilityGoodDocument))
       probabilityNegative += math.log(max(sys.float_info.min, probabilityBadDocument))
 
       if probabilityPositive > probabilityNegative:
-          return 5
+          return '5'
       else:
-          return 0
+          return '1'
 
 
    def loadFile(self, sFilename):
