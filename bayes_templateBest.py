@@ -52,7 +52,7 @@ class Bayes_Classifier:
           testFileList = shuffledFileList[startIndex:endIndex]
           print len(trainFileList), len(testFileList)
 
-          bigramHolder = []
+        #   bigramHolder = []
           numRead = 0
           for review in trainFileList:
               reviewInfo = review.split('-')
@@ -68,13 +68,15 @@ class Bayes_Classifier:
                               self.badReviewFrequency[word] += 1
                           else:
                               self.badReviewFrequency[word] = 1
-                              bigramHolder[wordIndex % 2] = word
-                              if wordIndex % 2 == 1:
-                                  bigram = bigramHolder[0] + ' ' + bigramHolder[1]
-                                  if bigram in self.badReviewFrequency.keys():
-                                      self.badReviewFrequency[bigram] += 1
-                                  else:
-                                      self.badReviewFrequency[bigram] = 1
+                          if wordIndex != 0:
+                              bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
+                        #   bigramHolder[wordIndex % 2] = word
+                        #   if wordIndex % 2 == 1:
+                        #       bigram = bigramHolder[0] + ' ' + bigramHolder[1]
+                              if bigram in self.badReviewFrequency.keys():
+                                  self.badReviewFrequency[bigram] += 1
+                              else:
+                                  self.badReviewFrequency[bigram] = 1
                   elif reviewInfo[1] == '5':
                     #   print numRead
                       self.goodReviewFrequency["num_good_documents"] += 1
@@ -84,14 +86,15 @@ class Bayes_Classifier:
                               self.goodReviewFrequency[word] += 1
                           else:
                               self.goodReviewFrequency[word] = 1
-                          bigramHolder[wordIndex % 2] = word
-                          if wordIndex % 2 == 1:
-                              bigram = bigramHolder[0] + ' ' + bigramHolder[1]
+                          if wordIndex != 0:
+                              bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
+                        #   if wordIndex % 2 == 1:
+                            #   bigram = bigramHolder[0] + ' ' + bigramHolder[1]
                               if bigram in self.goodReviewFrequency.keys():
                                   self.goodReviewFrequency[bigram] += 1
                               else:
                                   self.goodReviewFrequency[bigram] = 1
-                  bigramHolder = []
+                #   bigramHolder = []
 
 
           self.save(self.goodReviewFrequency, "goodReviews"+str(i)+".txt")
@@ -169,7 +172,7 @@ class Bayes_Classifier:
           numBadWords += self.badReviewFrequency[badWord]
 
       tokens = self.tokenize(sText)
-      for word in tokens:
+      for wordIndex, word in enumerate(tokens):
           if word in self.goodReviewFrequency.keys():
               wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1.0)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
@@ -182,6 +185,22 @@ class Bayes_Classifier:
           else:
               wordProbabilityNegative = max(sys.float_info.min, 1.0/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
+
+          if wordIndex != 0:
+              bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
+              if bigram in self.goodReviewFrequency.keys():
+                  wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[bigram] + 1.0)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
+                  probabilityPositive += math.log(wordProbabilityPositive)
+              else:
+                  wordProbabilityPositive = max(sys.float_info.min, 1.0/(numGoodWords + (numGoodDocuments + numBadDocuments)))
+                  probabilityPositive += math.log(wordProbabilityPositive)
+              if bigram in self.badReviewFrequency.keys():
+                  wordProbabilityNegative = max(sys.float_info.min, (self.badReviewFrequency[bigram] + 1.0)/(numBadWords + (numGoodDocuments + numBadDocuments)))
+                  probabilityNegative += math.log(wordProbabilityNegative)
+              else:
+                  wordProbabilityNegative = max(sys.float_info.min, 1.0/(numBadWords + (numGoodDocuments + numBadDocuments)))
+                  probabilityNegative += math.log(wordProbabilityNegative)
+
       probabilityPositive += math.log(max(sys.float_info.min, probabilityGoodDocument))
       probabilityNegative += math.log(max(sys.float_info.min, probabilityBadDocument))
 
