@@ -1,0 +1,10 @@
+0 trial resulted in 0.983050847458, 0.833034111311, 0.901846452867 precision, recall, and f_measure
+1 trial resulted in 0.984110169492, 0.8407239819, 0.906783796974 precision, recall, and f_measure
+2 trial resulted in 0.98064516129, 0.828337874659, 0.898079763663 precision, recall, and f_measure
+3 trial resulted in 0.982646420824, 0.817689530686, 0.892610837438 precision, recall, and f_measure
+4 trial resulted in 0.979481641469, 0.830586080586, 0.898909811695 precision, recall, and f_measure
+5 trial resulted in 0.9767687434, 0.821492007105, 0.892426435118 precision, recall, and f_measure
+6 trial resulted in 0.985386221294, 0.824454148472, 0.89776509748 precision, recall, and f_measure
+7 trial resulted in 0.979035639413, 0.837668161435, 0.90285161914 precision, recall, and f_measure
+8 trial resulted in 0.975308641975, 0.840425531915, 0.902857142857 precision, recall, and f_measure
+9 trial resulted in 0.978401727862, 0.827397260274, 0.89658584859 precision, recall, and f_measure
