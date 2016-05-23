@@ -44,11 +44,13 @@ class Bayes_Classifier:
           self.badReviewFrequency["num_bad_documents"] = 0
         #   print lFileList[0:10]
         #   print shuffledFileList[0:10]
-          startIndex = int(len(shuffledFileList)*i/folds)
-          endIndex = int(len(shuffledFileList)*(i+1)/folds)
+          startIndex = int(len(shuffledFileList)*float(i)/folds)
+          endIndex = int(len(shuffledFileList)*float(i+1)/folds)
+          print startIndex, endIndex
           trainFileList = shuffledFileList[0:startIndex]
           trainFileList.extend(shuffledFileList[endIndex:len(shuffledFileList)])
           testFileList = shuffledFileList[startIndex:endIndex]
+          print len(trainFileList), len(testFileList)
 
           numRead = 0
           for review in trainFileList:
@@ -100,21 +102,21 @@ class Bayes_Classifier:
                 #    print 'classifying'
                    textToClassify = self.loadFile("reviews/movies_reviews/"+review)
                    classification = self.classify(textToClassify)
-                   print trueClass, classification
+                #    print trueClass, classification
                    if trueClass == classification:
                        if trueClass == '1':
                            trueNegatives += 1
-                           print 'trueNegative'
+                        #    print 'trueNegative'
                        else:
                            truePositives += 1
-                           print 'truePositive'
+                        #    print 'truePositive'
                    else:
                        if trueClass == '1':
                            falsePositives += 1
-                           print 'falsePositive'
+                        #    print 'falsePositive'
                        else:
                            falseNegatives += 1
-                           print 'falseNegative'
+                        #    print 'falseNegative'
 
     #    percentageCorrect = float(numCorrectlyClassified)/numFiles
        if truePositives + falsePositives != 0:
