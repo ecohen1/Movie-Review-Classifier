@@ -27,7 +27,6 @@ class Bayes_Classifier:
    def train(self):
       """Trains the Naive Bayes Sentiment Classifier."""
 
-
       lFileList = []
       for fFileObj in os.walk("reviews/movies_reviews"):
           lFileList = fFileObj[2]
@@ -35,6 +34,7 @@ class Bayes_Classifier:
       random.shuffle(lFileList)
       shuffledFileList = lFileList[0:len(lFileList)]
       print 'training on ' + str(len(shuffledFileList)) + ' files'
+
       folds = 10
       for i in range(folds):
 
@@ -44,8 +44,8 @@ class Bayes_Classifier:
           self.badReviewFrequency["num_bad_documents"] = 0
         #   print lFileList[0:10]
         #   print shuffledFileList[0:10]
-          startIndex = int(len(shuffledFileList)*i/10)
-          endIndex = int(len(shuffledFileList)*(i+1)/10)
+          startIndex = int(len(shuffledFileList)*i/folds)
+          endIndex = int(len(shuffledFileList)*(i+1)/folds)
           trainFileList = shuffledFileList[0:startIndex]
           trainFileList.extend(shuffledFileList[endIndex:len(shuffledFileList)])
           testFileList = shuffledFileList[startIndex:endIndex]
