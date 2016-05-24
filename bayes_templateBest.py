@@ -17,16 +17,19 @@ class Bayes_Classifier:
       self.goodReviewFrequency = {}
       self.badReviewFrequency = {}
 
-    #   if os.path.isfile('./goodReviews.txt') and os.path.isfile('./badReviews.txt'):
-    #       self.goodReviewFrequency = self.load("goodReviews.txt")
-    #       self.badReviewFrequency = self.load("badReviews.txt")
-    #   else:
-      self.train()
+    #   check if model already exists
+      if os.path.isfile('./goodReviews.txt') and os.path.isfile('./badReviews.txt'):
+          self.goodReviewFrequency = self.load("goodReviews.txt")
+          self.badReviewFrequency = self.load("badReviews.txt")
+    #   if not, train
+      else:
+          self.train()
 
 
    def train(self):
       """Trains the Naive Bayes Sentiment Classifier."""
 
+    #   get shuffled list of filenames
       lFileList = []
       for fFileObj in os.walk("./movies_reviews"):
           lFileList = fFileObj[2]
@@ -37,12 +40,13 @@ class Bayes_Classifier:
 
       folds = 10
       for i in range(folds):
-
+        #   empty dicts
           self.goodReviewFrequency = {}
           self.badReviewFrequency = {}
           self.goodReviewFrequency["num_good_documents"] = 0
           self.badReviewFrequency["num_bad_documents"] = 0
 
+        #   split into train and test filename arrays
           startIndex = int(len(shuffledFileList)*float(i)/folds)
           endIndex = int(len(shuffledFileList)*float(i+1)/folds)
           print startIndex, endIndex
@@ -53,9 +57,9 @@ class Bayes_Classifier:
           reviewText = ''
 
           numRead = 0
-          MAX_RESULTS = 10000
+          MAX_RESULTS = 10000 # most number of allowable entries in dictionary
           for review in trainFileList:
-            #   print review
+            #   sort and limit dicts to MAX_RESULTS results
               self.badReviewFrequency = self.badReviewFrequency.items()
               self.badReviewFrequency.sort(key=lambda x: -x[1])
               self.badReviewFrequency = dict(self.badReviewFrequency[0:MAX_RESULTS])
@@ -63,40 +67,45 @@ class Bayes_Classifier:
               self.goodReviewFrequency.sort(key=lambda x: -x[1])
               self.goodReviewFrequency = dict(self.goodReviewFrequency[0:MAX_RESULTS])
               reviewInfo = review.split('-')
+
+            #   in google drive folders this filters out desktop.ini file
               if len(reviewInfo) == 3:
                   rating = reviewInfo[1]
                   if numRead % 100 == 0:
                       print numRead
                   reviewText = self.loadFile("./movies_reviews/"+review)
-                  if rating == '1':
+                  if rating == '1': # bad review
                       numRead += 1
                       self.badReviewFrequency["num_bad_documents"] += 1
                       tokens = self.tokenize(reviewText)
                       for wordIndex in range(len(tokens)):
                           word = tokens[wordIndex].lower()
                           badReviewFrequencyKeys = self.badReviewFrequency.keys()
+                          # insert unigram
                           if word in badReviewFrequencyKeys:
                               self.badReviewFrequency[word] += 1
                           else:
                               self.badReviewFrequency[word] = 1
+                          # insert bigram
                           if wordIndex != 0:
                               bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
                               if bigram in badReviewFrequencyKeys:
                                   self.badReviewFrequency[bigram] += 1
                               else:
                                   self.badReviewFrequency[bigram] = 1
-                  elif rating == '5':
+                  elif rating == '5': # good review
                       numRead += 1
                       self.goodReviewFrequency["num_good_documents"] += 1
                       tokens = self.tokenize(reviewText)
-                      tokens = tokens[0:len(tokens)/10]
                       for wordIndex in range(len(tokens)):
                           word = tokens[wordIndex]
                           goodReviewFrequencyKeys = self.goodReviewFrequency.keys()
+                          # insert unigram
                           if word in goodReviewFrequencyKeys:
                               self.goodReviewFrequency[word] += 1
                           else:
                               self.goodReviewFrequency[word] = 1
+                          # insert bigram
                           if wordIndex != 0:
                               bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
                               if bigram in goodReviewFrequencyKeys:
@@ -104,21 +113,26 @@ class Bayes_Classifier:
                               else:
                                   self.goodReviewFrequency[bigram] = 1
 
-
+          # pickle dict
           self.save(self.goodReviewFrequency, "goodReviews"+str(i)+".txt")
           self.save(self.badReviewFrequency, "badReviews"+str(i)+".txt")
           precision, recall, f_measure = self.crossValidation(testFileList)
+          # log results
           f = open('results.txt', 'a')
           f.write(str(i) + " trial resulted in " + str(precision) + ", " + str(recall) + ", " + str(f_measure) + " precision, recall, and f_measure\n")
           f.close()
 
    def crossValidation(self, testFileList):
+       """
+       This function validates on the test data set and returns precision, recall, and f-measure
+       """
        numFiles = 0
        truePositives = 0
        trueNegatives = 0
        falsePositives = 0
        falseNegatives = 0
 
+       # negative = bad review, positive = good review
        for review in testFileList:
            tokenName = review.split("-")
            if len(tokenName) == 3:
@@ -130,19 +144,19 @@ class Bayes_Classifier:
                    if trueClass == classification:
                        if trueClass == '1':
                            trueNegatives += 1
-                        #    print 'trueNegative'
+                        #    'trueNegative'
                        else:
                            truePositives += 1
-                        #    print 'truePositive'
+                        #    'truePositive'
                    else:
                        if trueClass == '1':
                            falsePositives += 1
-                        #    print 'falsePositive'
+                        #    'falsePositive'
                        else:
                            falseNegatives += 1
-                        #    print 'falseNegative'
+                        #    'falseNegative'
 
-    #    percentageCorrect = float(numCorrectlyClassified)/numFiles
+       # calculate precision, recall, f-measure
        if truePositives + falsePositives != 0:
            precision = float(truePositives)/(truePositives + falsePositives)
        else:
@@ -167,12 +181,14 @@ class Bayes_Classifier:
       probabilityPositive = 0
       probabilityNegative = 0
 
+      # retrieve total number of reviews
       numGoodDocuments = self.goodReviewFrequency["num_good_documents"]
       numBadDocuments = self.badReviewFrequency["num_bad_documents"]
       probabilityGoodDocument = numGoodDocuments/(numGoodDocuments + numBadDocuments)
       probabilityBadDocument = numBadDocuments/(numGoodDocuments + numBadDocuments)
       numGoodWords = 0
       numBadWords = 0
+      #keep track of good and bad words
       for goodWord in self.goodReviewFrequency.keys():
           numGoodWords += self.goodReviewFrequency[goodWord]
       for badWord in self.badReviewFrequency.keys():
@@ -181,6 +197,7 @@ class Bayes_Classifier:
       tokens = self.tokenize(sText)
       for wordIndex in range(len(tokens)):
           word = tokens[wordIndex]
+          #calculate conditional probabilities based on whether word is good or bad, or neither
           if word in self.goodReviewFrequency.keys():
               wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1.0)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
@@ -194,6 +211,7 @@ class Bayes_Classifier:
               wordProbabilityNegative = max(sys.float_info.min, 1.0/(numBadWords + (numGoodDocuments + numBadDocuments)))
               probabilityNegative += math.log(wordProbabilityNegative)
 
+          #do same for bigrams
           if wordIndex != 0:
               bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
               if bigram in self.goodReviewFrequency.keys():
