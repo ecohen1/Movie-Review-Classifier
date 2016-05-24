@@ -53,8 +53,9 @@ class Bayes_Classifier:
 
           numRead = 0
           for review in trainFileList:
-              rating = review.split('-')[1]
+              reviewInfo = review.split('-')
               if len(reviewInfo) == 3:
+                  rating = reviewInfo[1]
                   if numRead % 100 == 0:
                       print numRead
                   reviewText = self.loadFile("movies_reviews/"+review)
