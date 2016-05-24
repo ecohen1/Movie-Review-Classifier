@@ -28,7 +28,7 @@ class Bayes_Classifier:
       """Trains the Naive Bayes Sentiment Classifier."""
 
       lFileList = []
-      for fFileObj in os.walk("reviews/movies_reviews"):
+      for fFileObj in os.walk("movies_reviews"):
           lFileList = fFileObj[2]
           break
       random.shuffle(lFileList)
@@ -60,7 +60,7 @@ class Bayes_Classifier:
                   if reviewInfo[1] == '1':
                     #   print numRead
                       self.badReviewFrequency["num_bad_documents"] += 1
-                      reviewText = self.loadFile("reviews/movies_reviews/"+review)
+                      reviewText = self.loadFile("movies_reviews/"+review)
                       tokens = self.tokenize(reviewText)
                       for word in tokens:
                           if word in self.badReviewFrequency.keys():
@@ -70,7 +70,7 @@ class Bayes_Classifier:
                   elif reviewInfo[1] == '5':
                     #   print numRead
                       self.goodReviewFrequency["num_good_documents"] += 1
-                      reviewText = self.loadFile("reviews/movies_reviews/"+review)
+                      reviewText = self.loadFile("movies_reviews/"+review)
                       tokens = self.tokenize(reviewText)
                       for word in tokens:
                           if word in self.goodReviewFrequency.keys():
@@ -100,7 +100,7 @@ class Bayes_Classifier:
                if trueClass == '1' or trueClass == '5':
                    numFiles += 1
                 #    print 'classifying'
-                   textToClassify = self.loadFile("reviews/movies_reviews/"+review)
+                   textToClassify = self.loadFile("movies_reviews/"+review)
                    classification = self.classify(textToClassify)
                 #    print trueClass, classification
                    if trueClass == classification:
