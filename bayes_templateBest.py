@@ -42,8 +42,7 @@ class Bayes_Classifier:
           self.badReviewFrequency = {}
           self.goodReviewFrequency["num_good_documents"] = 0
           self.badReviewFrequency["num_bad_documents"] = 0
-        #   print lFileList[0:10]
-        #   print shuffledFileList[0:10]
+
           startIndex = int(len(shuffledFileList)*float(i)/folds)
           endIndex = int(len(shuffledFileList)*float(i+1)/folds)
           print startIndex, endIndex
@@ -52,7 +51,6 @@ class Bayes_Classifier:
           testFileList = shuffledFileList[startIndex:endIndex]
           print len(trainFileList), len(testFileList)
 
-        #   bigramHolder = []
           numRead = 0
           for review in trainFileList:
               reviewInfo = review.split('-')
@@ -64,16 +62,14 @@ class Bayes_Classifier:
                       self.badReviewFrequency["num_bad_documents"] += 1
                       tokens = self.tokenize(reviewText)
                       for wordIndex, word in enumerate(tokens):
-                          if word in self.badReviewFrequency.keys():
+                          badReviewFrequencyKeys = self.badReviewFrequency.keys()
+                          if word in badReviewFrequencyKeys:
                               self.badReviewFrequency[word] += 1
                           else:
                               self.badReviewFrequency[word] = 1
                           if wordIndex != 0:
                               bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
-                        #   bigramHolder[wordIndex % 2] = word
-                        #   if wordIndex % 2 == 1:
-                        #       bigram = bigramHolder[0] + ' ' + bigramHolder[1]
-                              if bigram in self.badReviewFrequency.keys():
+                              if bigram in badReviewFrequencyKeys:
                                   self.badReviewFrequency[bigram] += 1
                               else:
                                   self.badReviewFrequency[bigram] = 1
@@ -82,19 +78,17 @@ class Bayes_Classifier:
                       self.goodReviewFrequency["num_good_documents"] += 1
                       tokens = self.tokenize(reviewText)
                       for wordIndex, word in enumerate(tokens):
-                          if word in self.goodReviewFrequency.keys():
+                          goodReviewFrequencyKeys = self.goodReviewFrequency.keys()
+                          if word in goodReviewFrequencyKeys:
                               self.goodReviewFrequency[word] += 1
                           else:
                               self.goodReviewFrequency[word] = 1
                           if wordIndex != 0:
                               bigram = tokens[wordIndex-1] + ' ' + tokens[wordIndex]
-                        #   if wordIndex % 2 == 1:
-                            #   bigram = bigramHolder[0] + ' ' + bigramHolder[1]
-                              if bigram in self.goodReviewFrequency.keys():
+                              if bigram in goodReviewFrequencyKeys:
                                   self.goodReviewFrequency[bigram] += 1
                               else:
                                   self.goodReviewFrequency[bigram] = 1
-                #   bigramHolder = []
 
 
           self.save(self.goodReviewFrequency, "goodReviews"+str(i)+".txt")
