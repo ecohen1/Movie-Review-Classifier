@@ -56,9 +56,10 @@ class Bayes_Classifier:
           for review in trainFileList:
               reviewInfo = review.split('-')
               if len(reviewInfo) == 3:
-                  numRead += 1
+                  if numRead % 100 == 0:
+                      print numRead
                   if reviewInfo[1] == '1':
-                    #   print numRead
+                      numRead += 1
                       self.badReviewFrequency["num_bad_documents"] += 1
                       reviewText = self.loadFile("movies_reviews/"+review)
                       tokens = self.tokenize(reviewText)
@@ -68,6 +69,7 @@ class Bayes_Classifier:
                           else:
                               self.badReviewFrequency[word] = 1
                   elif reviewInfo[1] == '5':
+                      numRead += 1
                     #   print numRead
                       self.goodReviewFrequency["num_good_documents"] += 1
                       reviewText = self.loadFile("movies_reviews/"+review)

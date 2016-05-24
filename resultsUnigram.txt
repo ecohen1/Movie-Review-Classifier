@@ -1,0 +1,2 @@
+0 trial resulted in 0.939565627951, 0.884444444444, 0.911172161172 precision, recall, and f_measure
+1 trial resulted in 0.936458333333, 0.831637372803, 0.880940715336 precision, recall, and f_measure

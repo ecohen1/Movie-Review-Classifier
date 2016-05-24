@@ -17,18 +17,18 @@ class Bayes_Classifier:
       self.goodReviewFrequency = {}
       self.badReviewFrequency = {}
 
-      if os.path.isfile('./goodReviews.txt') and os.path.isfile('./badReviews.txt'):
-          self.goodReviewFrequency = self.load("goodReviews.txt")
-          self.badReviewFrequency = self.load("badReviews.txt")
-      else:
-          self.train()
+    #   if os.path.isfile('./goodReviews.txt') and os.path.isfile('./badReviews.txt'):
+    #       self.goodReviewFrequency = self.load("goodReviews.txt")
+    #       self.badReviewFrequency = self.load("badReviews.txt")
+    #   else:
+      self.train()
 
 
    def train(self):
       """Trains the Naive Bayes Sentiment Classifier."""
 
       lFileList = []
-      for fFileObj in os.walk("movies_reviews"):
+      for fFileObj in os.walk("./movies_reviews"):
           lFileList = fFileObj[2]
           break
       random.shuffle(lFileList)
@@ -50,21 +50,30 @@ class Bayes_Classifier:
           trainFileList.extend(shuffledFileList[endIndex:len(shuffledFileList)])
           testFileList = shuffledFileList[startIndex:endIndex]
           print len(trainFileList), len(testFileList)
+          reviewText = ''
 
           numRead = 0
+          MAX_RESULTS = 10000
           for review in trainFileList:
+            #   print review
+              self.badReviewFrequency = self.badReviewFrequency.items()
+              self.badReviewFrequency.sort(key=lambda x: -x[1])
+              self.badReviewFrequency = dict(self.badReviewFrequency[0:MAX_RESULTS])
+              self.goodReviewFrequency = self.goodReviewFrequency.items()
+              self.goodReviewFrequency.sort(key=lambda x: -x[1])
+              self.goodReviewFrequency = dict(self.goodReviewFrequency[0:MAX_RESULTS])
               reviewInfo = review.split('-')
               if len(reviewInfo) == 3:
                   rating = reviewInfo[1]
                   if numRead % 100 == 0:
                       print numRead
-                  reviewText = self.loadFile("movies_reviews/"+review)
+                  reviewText = self.loadFile("./movies_reviews/"+review)
                   if rating == '1':
                       numRead += 1
                       self.badReviewFrequency["num_bad_documents"] += 1
                       tokens = self.tokenize(reviewText)
                       for wordIndex in range(len(tokens)):
-                          word = tokens[wordIndex]
+                          word = tokens[wordIndex].lower()
                           badReviewFrequencyKeys = self.badReviewFrequency.keys()
                           if word in badReviewFrequencyKeys:
                               self.badReviewFrequency[word] += 1
@@ -80,6 +89,7 @@ class Bayes_Classifier:
                       numRead += 1
                       self.goodReviewFrequency["num_good_documents"] += 1
                       tokens = self.tokenize(reviewText)
+                      tokens = tokens[0:len(tokens)/10]
                       for wordIndex in range(len(tokens)):
                           word = tokens[wordIndex]
                           goodReviewFrequencyKeys = self.goodReviewFrequency.keys()
@@ -152,6 +162,8 @@ class Bayes_Classifier:
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
+      sText = sText.lower()
+
       probabilityPositive = 0
       probabilityNegative = 0
 
@@ -167,7 +179,8 @@ class Bayes_Classifier:
           numBadWords += self.badReviewFrequency[badWord]
 
       tokens = self.tokenize(sText)
-      for wordIndex, word in enumerate(tokens):
+      for wordIndex in range(len(tokens)):
+          word = tokens[wordIndex]
           if word in self.goodReviewFrequency.keys():
               wordProbabilityPositive = max(sys.float_info.min, (self.goodReviewFrequency[word] + 1.0)/(numGoodWords + (numGoodDocuments + numBadDocuments)))
               probabilityPositive += math.log(wordProbabilityPositive)
